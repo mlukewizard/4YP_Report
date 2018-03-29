@@ -1,0 +1,285 @@
+\documentclass[11pt]{report}
+\usepackage[utf8]{}
+\usepackage{fontspec}
+\setmainfont{Arial}
+\usepackage{geometry}
+\geometry{a4paper,left=20mm,right = 20mm,top=20mm,bottom=20mm}
+\usepackage{setspace}
+\doublespacing
+\usepackage{graphicx}
+\graphicspath{ {Images/} }
+\usepackage{placeins} %This is for FloatBarrier
+\usepackage{tikz} %This is for the flow diagram
+\usepackage[superscript]{cite}
+\usepackage[symbol]{footmisc}
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\begin{document}
+%========================================================
+%==================Introduction==========================
+\chapter{Introduction} \label{chap-Intro}
+
+\section{Introducing the problem} \label{sec-Intro-IntroProblem}
+The abdominal aorta is the largest blood vessel in the human body. It transports oxygenated blood from the heart to other organs within the abdomen and to the lower limbs. An abdominal aortic aneurysm is the pathological dilation of the abdominal aorta. While a healthy aorta is generally 20mm in diameter, an aorta containing an aneurysm could dilate to over 50mm and in rare cases over 100mm.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width = 10cm]{AAA.jpg}
+\label{fig-Intro-IntroProblem-AAA}
+\caption{A pictorial representation of a healthy vs unhealthy aorta}
+\end{figure}
+\FloatBarrier
+
+Although aneurysms can also develop in blood vessels other than the aorta, this project is only concerned with abdominal aortic aneurysms; henceforth an abdominal aortic aneurysm will simply be referred to as an aneurysm.
+
+Ruptured aneurysms cause approximately 6000 deaths in the UK per year. In addition, patients with aneurysms have increased risk of developing non-aneurysm related cardiovascular morbidities compared to their contemporaries. Fortunately, surgical intervention is possible. A stent is a metal or plastic tube which can be inserted into the aorta to relieve pressure from the sidewalls, hence reducing the risk of rupture. In some patients full aortic reconstruction is preferred, this provides a more permanent solution but carries more risk.
+
+Currently medical intervention is recommended primarily based on aneurysm diameter [cite]. A recent survey by R.Lee concluded that the top priority for aneurysm research is in finding \lq new tests that can predict if an abdominal aortic aneurysm will be fast growing\rq. This is the primary objective of this project.
+
+An area of research which has gained traction in recent years is the use of flow mediated dilation (FMD) measurements for risk evaluation of aneurysms. An FMD measurement is taken by measuring the percentage change in diameter of a blood vessel between constrained and unconstrained blood flow; a healthy patient would see an increase in diameter of roughly 5\% after removing the constraint, while the diameter of the vessel in an unhealthy patient might decrease. The test is usually performed on the patients arm, blood flow is restricted using a pressure cuff and blood vessel diameter is measured on an ultrasound image. It is a well established phenomenon that a patient's FMD score significantly improves after aneurysm surgery [cite]. The secondary aim of this project is to investigate the link between aneurysm geometry and FMD measurement to improve the understanding of this phenomenon.
+
+\section{Engineering a solution} \label{sec-Intro-EngineeringSolution}
+The main focus of this project is to carry out a multivariate regression to correlate a large range of geometric and non-geometric features with aneurysm growth. The hope is that by making these correlations it will be possible to accurately predict the diameter of the aneurysm at a future date and hence gauge the need for medical intervention.
+
+Following this, a similar methodology will be applied to the intimately linked task of predicting FMD scores using aneurysm geometry.
+
+High quality images are required to extract large quantities of geometric information, fortunately patients with aneurysms usually undergo multiple CT scans as part of the routine monitoring service offered by the NHS. For the purpose of this project, these scans will be obtained from the Oxford Abdominal Aortic Aneurysm (OxAAA) database which currently comprises information for over 300 patients. Alongside high quality CT scans, many of these patients also have accompanying growth rates and FMD measurements, making it an ideal dataset for the purposes of this project.
+
+A typical slice from an abdominal CT scan can be seen in figure \ref{fig-Intro-IntroProblem-CTScan}. The outer aortic wall is marked by a red border on the left most image, the inner aortic wall is marked by a red border on the central image. The volume of tissue between the inner and outer wall is commonly seen in aneurysms and is known as the lumen.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width = 17cm]{CT1.png}
+\label{fig-Intro-IntroProblem-CTScan}
+\caption{A typical CT Scan, showing outer and inner aortic wall on separate slices}
+\end{figure}
+\FloatBarrier
+
+One of the biggest considerations when undertaking this project, is that for any conclusions to be widely accepted in the field of medicine, they must be backed by widely accepted medical theory. For this reason, the chosen method of regression should have a well defined feature vector, unlike those seen when using techniques such as convolutional neural networks. 
+
+To obtain a feature vector derived from aneurysm geometry, it is clear that first an accurate 3D model of the aneurysm must be extracted. CT scans usually consist of over 500 cross-sectional images which are taken at multiple locations on the abdomen. Manually labeling this many images to construct a 3D model of an aneurysm is clearly infeasible for the quantity of patients we aim to use for the regression task. As a result, a large portion of this project will be devoted to the automatic extraction of these 3D models and this will constitute this project's third hypothesis.
+
+The project work-flow can be seen in figure \ref{fig-Intro-EngineeringSolution-Flow}
+
+\begin{figure}[!ht]
+\centering
+\begin{tikzpicture}[node distance=2cm]
+\node (node1) [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=blue!30] {Collect data};
+\node (node2) [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=blue!30, below of= node1]{Build an algorithm to segment the aorta};
+\node (node3) [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=blue!30, below of= node2]{Use the algorithm to segment many patients};
+\node (node4) [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=blue!30, below of= node3]{Extract geometry from the segmented patients};
+\node (node5) [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=blue!30, below of= node4, xshift = 4cm]{Regress for growth rate prediction};
+\node (node6) [rectangle, rounded corners, minimum width=3cm, minimum height=1cm,text centered, draw=black, fill=blue!30, below of= node4, xshift = -4cm]{Regress for FMD prediction};
+\draw [thick,->,>=stealth] (node1) -- (node2);
+\draw [thick,->,>=stealth] (node2) -- (node3);
+\draw [thick,->,>=stealth] (node3) -- (node4);
+\draw [thick,->,>=stealth] (node4) -- (node5);
+\draw [thick,->,>=stealth] (node4) -- (node6);
+
+\end{tikzpicture}
+\label{fig-Intro-EngineeringSolution-Flow}
+\caption{Flow of work}
+\end{figure}
+\FloatBarrier
+
+\section{Hypothesis} \label{sec-Intro-Hypothesis}
+\begin{enumerate}
+\item Modern image analysis techniques can be used to segment the inner and outer wall of the aorta
+\item Geometric features of the aorta are indicative of aneurysm growth
+\item Geometric features of the aorta correlate to FMD measurements
+\end{enumerate}
+
+%========================================================
+%==================Literature Review=====================
+\chapter{Literature Review} \label{chap-Lit}
+\section{Aortic Segmentation} \label{sec-Lit-Segmentation}
+Due to the tedious and time-consuming nature of the manual segmentation of CT images, there have been many attempts in recent years to develop automatic methods for doing so.
+
+Given that the original scope of the project was to train a regression algorithm to predict aneurysm growth rates, at the outset the intention was to use open source software for the automatic segmentation of CT images. 3DSlicer [cite], ImageVis3D [cite] and SimVascular [cite] are open source softwares which assist in the visualization and analysis of aneurysms, however their automatic segmentation capability is limited to user assisted segmentation of the inner aortic wall. VesselIQ Xpress (GE) [cite]  and Vitrea Imaging (Toshiba) [cite] allow the semi-automatic segmentation of the outer aortic wall, however they are both commercial softwares. 
+
+Segmenting the inner wall is a largely trivial task which can be achieved with simple thresholding techniques, hence the majority of literature is devoted to the achieving fully automatic segmentation of the outer wall. 
+
+Subasic, Loncaric and Sorantin (2002) \cite{Subasic} developed a level set algorithm in 2003 capable of segmenting the outer wall. The algorithm achieved 88\% pixel overlap between the predicted segmentation and a manually corrected version of the predicted segmentation. It then achieved 81\% overlap when compared with the manually corrected output of a different algorithm. It should be noted that they did not compare the results with an entirely manual segmentation.
+
+In more recent years, López-Linares K. et al. [cite] used a deep convolutional neural network to achieve an 83.7\% overlap as defined by the dice coefficient [ref].
+
+In 2015 Olaf Ronneberger, Philipp Fischer and Thomas Brox [cite] developed a new convolutional neural network architecture called the U-net. It proceeded to win an ultrasound nerve segmentation competition and has now become widely used in the field. 
+
+The segmentation part of this project will attempt to build upon the u-net developed by Olaf Ronneberger et al. and apply it to the segmentation of aneurysms.
+
+\section{Aneurysm Predictions} \label{sec-Lit-Predictions}
+Clearly the holy grail of aneurysm treatment would be the ability to accurately predict the risk of aneurysm rupture. However this predictor is difficult to test due to the intrinsic difficulties in obtaining a dataset containing patients who have had CT scans but who's aneurysms have then gone on to rupture.
+
+R.Lee et al. found a negative correlation between aneurysm diameter and FMD measurement with a Spearman coefficient of -0.28. They also reported a positive correlation between aneurysm diameter and future aneurysm growth rate for aneurysms between 30-55mm in diameter, Spearman coefficient 0.30.
+
+Peak aneurysm wall shear stress is considered a useful metric for predicting aneurysm rupture risk. If peak wall shear stress exceeds the wall shear strength then by definition; rupture will occur. Georgakarakos et al. \cite{Georgakarakos} investigate the relationship between several geometric features and peak wall shear stress. When correlating max aneurysm diameter and center line tortuosity with peak wall shear stress they found statistically significant positive correlations. However center line torsion, curvature and relative intra-luminal thrombus volume all failed to produce statistically significant results.
+
+This part of this project will aim to predict FMD measurements and aneurysm growth rates using not only the features mentioned above, but also an from an extended list which can be seen in table [ref]. 
+
+%========================================================
+%=================Data Collection and Labelling==========
+\chapter{Data Collection and Labelling} \label{chap-Data}
+\section{Introduction} \label{sec-Data-Intro}
+Large quantities of data are required for the training of both neural networks and multivariate regressors. As discussed in section \ref{sec-Intro-EngineeringSolution}, data has been made available through access to the OxAAA database. For the CT scans to be useful in neural network training, they must first be segmented manually. This process is subject to high levels of inter observer variation and so an evaluation of this error is presented here. 
+
+\section{Methods} \label{sec-Data-Methods}
+\subsection{Contrast Optimization} \label{sec-Data-Methods-Contrast}
+
+
+%========================================================
+%=====Data Pre-processing and Neural Network Training====
+\chapter{Data Pre-processing and Network Training} \label{chap-Train}
+\section{Introduction} \label{sec-Train-Intro}
+The training of convolutional neural networks require careful optimisation of network architecture and model hyper-parameters. As discussed in section \ref{sec-Lit-Predictions}, the U-net architecture is the current state of the art in image segmentation. This chapter will build on the U-net architecture, extend it into 2.5D and harness contextual information through the use of an Long Short-Term Memory layer. 
+
+
+In addition, data augmentation has frequently been shown to dramatically increase the performance of convolutional neural networks, especially when only small quantities of training data is available. Multiple data augmentation techniques are harnessed to improve the performance of the network.
+
+
+\section{Data Augmentation} \label{sec-Train-Methods-Augmentation}
+\subsection{Contrast Augmentation} \label{sec-Train-Methods-Augmentation-Contrast}
+Contrast adjustment is a simple way of ensuring the network is robust to naturally occurring changes in image intensity. The variation in intensity of gray-scale CT images as calculated using the dataset of VAR, has a standard deviation of VAR\% which is then increased to VAR\% after the contrast adjustment step in \ref{sec-Data-Methods-Contrast}. This is very low compared to the variation in contrast CNN's must handle in applications such as image recognition, hence only low levels of contrast augmentation were deemed necessary.
+
+The first method of contrast adjustment is through a simple, randomly generated pixel mapping. An identity pixel mapping for the grey-scale range 0-255 is shown in figure VAR. A pixel mapping is applied through element-wise function evaluation. Let $I$ be the original image and $I'$ be the contrast adjusted image. For pixel mapping $f$:
+\begin{equation}
+I'_{i,j} = f(I_{i,j}) \qquad \forall i, j\enspace 
+\end{equation}
+where $i$ and $j$ the index of each pixel.
+Contrast adjustment is achieved by defining the pixel mapping as a 3rd order polynomial which is fit to points perturbed from the identity pixel mapping.
+\begin{equation}
+f(I) = A + BI + CI^2 + DI^3
+\end{equation}
+where 
+\begin{equation}
+  \left[ {\begin{array}{c}
+   0 \\
+   255 \\
+   \mathcal{N}(85,\,30^2) \\
+   \mathcal{N}(170,\,30^2) \\
+  \end{array} } \right]
+  = \left[ {\begin{array}{cccc}
+   1 & 0 & 0 & 0 \\
+   1 & 255 & 255 & 255\\
+   1 & 85 & 85 & 85 \\
+   1 & 170 & 170 & 170 \\
+  \end{array} } \right]
+  \left[ {\begin{array}{c}
+   A \\
+   B \\
+   C \\
+   D \\
+  \end{array} } \right]
+\end{equation}
+which is represented in figure \ref{sec-Train-Methods-Augmentation-Contrast-perturbedMapping}
+\begin{figure}[!ht]
+\centering
+\begin{minipage}[b]{0.4\textwidth}
+  \centering
+  \includegraphics[width=8cm]{identityMapping.png}
+  \caption{A subfigure}
+  \label{sec-Train-Methods-Augmentation-Contrast-identityMapping}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.4\textwidth}
+  \centering
+  \includegraphics[width=8cm]{perturbedMapping.png}
+  \caption{A subfigure}
+  \label{sec-Train-Methods-Augmentation-Contrast-perturbedMapping}
+\end{minipage}
+\end{figure}
+\FloatBarrier
+
+\subsection{Shear Transformation} \label{sec-Train-Methods-Augmentation-Shear}
+Shear transformations are used to increase the robustness of the network with respect to small patient rotations and internal organ layout. A shear transform is applied via a convolution of an affine transformation matrix with the image. In homogeneous coordinates:
+
+\begin{equation}
+\label{ShearTransformation}
+A=
+\left[ {\begin{array}{ccc}
+   1 & \tan \phi & 0 \\
+   0 & 1 & 0 \\
+   0 & 0 & 1 \\
+  \end{array} } \right]
+\end{equation}
+
+The magnitude of shear can be adjusted with $\phi$
+
+\subsection{Divergence Transformation} \label{sec-Train-Methods-Augmentation-Divergence}
+A divergence transformation is a non-linear image warping technique. It facilitates the creation of diverse image augmentations by adjusting the image in a certain predefined location. The location may be the top, bottom, leftmost or rightmost point on the aneurysm. \footnote{N.B the location of each of these points in aneurysm is easily derived because the training set is labelled.}
+
+Conceptually it involves projection of an image onto a 3D surface and then re-sampling along the surface to convert it back into 2D. By selecting the shape of the 3D surface different warping effects can be created. A bowl shaped surface produces a convergent effect and a spike shaped surface produces a divergent effect. The divergence process is shown in figures VAR to VAR.
+
+\begin{figure}[!ht]
+\centering
+\begin{minipage}[b]{0.33\textwidth}
+  \centering
+  \includegraphics[width=6cm]{Figure_3.png}
+  \caption{A subfigure}
+  \label{sec-Train-Methods-Augmentation-Divergence-Mapped}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.33\textwidth}
+  \centering
+  \includegraphics[width=6cm]{Figure_2.png}
+  \caption{A subfigure}
+  \label{sec-Train-Methods-Augmentation-Divergence-Surface}
+\end{minipage}
+\hfill
+\begin{minipage}[b]{0.33\textwidth}
+  \centering
+  \includegraphics[width=6cm]{Figure_1.png}
+  \caption{A subfigure}
+  \label{sec-Train-Methods-Augmentation-Divergence-Image}
+\end{minipage}
+\end{figure}
+\FloatBarrier
+
+The result of these image augmentations is demonstrated in figure VAR. For training, each patient is augmented 10:1. The top row are convergent transformations and the bottom row are divergent transformations.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width = 17cm]{augmentedPic.png}
+\label{augmentedPic}
+\caption{A single slice, augmented 10 times}
+\end{figure}
+\FloatBarrier
+
+\section{Network Architecture} \label{sec-Train-Methods-Architecture}
+\subsection{The Traditional U-Net}
+Convolutional neural networks are built using a layering system. There are 3 layers which are used in a traditional U-Net as presented by Ronneberger,  Fischer and Brox. \cite{Ronneberger}
+\subsubsection{Convolutional Layers}
+The convolutional layer consists of a set of filters which are convoluted with the layer's input to generate the layers output. The neural network will learn
+
+\subsection{Hyper Parameter Optimization} \label{sec-Train-Methods-Optimization}
+
+\section{Validation} \label{sec-Train-Validation}
+
+\section{Conclusion} \label{sec-Train-Conclusion}
+
+%========================================================
+%=============Feature Extraction and Regression==========
+\chapter{Feature Extraction and Regression} \label{chap-Regression}
+\section{Introduction} \label{sec-Regression-Intro}
+
+%========================================================
+%===========================Bibliography=================
+\begin{thebibliography}{9}
+\bibitem{Subasic}
+Marko Subasic, Sven Loncaric, Erich Sorantin, "3D image analysis of abdominal aortic aneurysm", Proc. SPIE 4684, Medical Imaging 2002: Image Processing, (9 May 2002)
+
+\bibitem{Lopez}
+López-Linares K. et al. (2017) DCNN-Based Automatic Segmentation and Quantification of Aortic Thrombus Volume: Influence of the Training Approach. In: Cardoso M. et al. (eds) Intravascular Imaging and Computer Assisted Stenting, and Large-Scale Annotation of Biomedical Data and Expert Label Synthesis. LABELS 2017, CVII 2017, STENT 2017. Lecture Notes in Computer Science, vol 10552. Springer, Cham
+
+\bibitem{RLee-Priorities}
+Lee R, Jones A, Cassimjee I, Handa A, "International opinion on priorities in research for small abdominal aortic aneurysms and the potential path for research to impact clinical management.", Oxford Abdominal Aortic Aneurysm Study.
+
+\bibitem{Georgakarakos}
+E. Georgakarakos, C.V. Ioannou, Y. Kamarianakis, Y. Papaharilaou, T. Kostas, E.Manousaki, A.N. Katsamouris, "The Role of Geometric Parameters in the Prediction
+of Abdominal Aortic Aneurysm Wall Stress"
+
+\bibitem{Ronneberger}
+O. Ronneberger,P. Fischer and T.Brox, "U-Net: Convolutional Networks for Biomedical Image Segmentation", (May 2015)
+
+\end{thebibliography}
+
+\end{document}
